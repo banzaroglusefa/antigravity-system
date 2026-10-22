@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "revision": 0,
+  "run_id": null,
+  "gate": "SHOT_LIST",
+  "phase": "IDLE",
+  "updated_at": null,
+  "source_commit": null,
+  "brief": {
+    "status": "EMPTY",
+    "version": 0,
+    "hash": null
+  },
+  "artifact_manifest_hash": null,
+  "review": null,
+  "last_decision": null,
+  "quality": null,
+  "render_contract": {
+    "seed": 42,
+    "fps": null,
+    "total_frames": null,
+    "width": null,
+    "height": null,
+    "renderer": "remotion",
+    "renderer_version": null,
+    "browser_version": null,
+    "node_version": null,
+    "ffmpeg_version": null,
+    "environment_verified": false
+  },
+  "policy": {
+    "version": "approval-v1",
+    "review_timeout_seconds": 600,
+    "minimum_score": 8,
+    "max_repair_attempts": 3,
+    "auto_advance_gates": [
+      "SHOT_LIST",
+      "STYLE_SHEET",
+      "ANIMATIC",
+      "FULL_TRANSITIONS",
+      "POLISH",
+      "AUDIO_SYNC",
+      "ERROR_CHECK"
+    ],
+    "publication_enabled": false
+  },
+  "handoff": {
+    "status": "LOCAL_ONLY",
+    "checkpoint_id": null,
+    "source_machine_id": null,
+    "target_machine_id": null,
+    "created_at": null,
+    "resume_phase": null
+  },
+  "failure": null
+}

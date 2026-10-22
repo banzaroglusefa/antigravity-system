@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AntiGravity State v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "revision", "run_id", "gate", "phase", "updated_at", "source_commit", "brief", "artifact_manifest_hash", "review", "last_decision", "quality", "render_contract", "policy", "handoff", "failure"],
+  "$defs": {
+    "nullableId": {"type": ["string", "null"], "minLength": 1},
+    "time": {"type": ["string", "null"], "format": "date-time"},
+    "requiredTime": {"type": "string", "format": "date-time"},
+    "hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "nullableHash": {"anyOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]},
+    "gate": {"enum": ["SHOT_LIST", "STYLE_SHEET", "ANIMATIC", "FULL_TRANSITIONS", "POLISH", "AUDIO_SYNC", "ERROR_CHECK"]},
+    "phase": {"enum": ["IDLE", "GENERATING", "CHECKING", "WAITING_USER", "NEEDS_REVISION", "PAUSED", "BLOCKED", "FAILED", "CANCELLED", "COMPLETED"]},
+    "positiveInteger": {"type": "integer", "minimum": 1}
+  },
+  "properties": {
+    "schema_version": {"const": 1},
+    "revision": {"type": "integer", "minimum": 0},
+    "run_id": {"$ref": "#/$defs/nullableId"},
+    "gate": {"$ref": "#/$defs/gate"},
+    "phase": {"$ref": "#/$defs/phase"},
+    "updated_at": {"$ref": "#/$defs/time"},
+    "source_commit": {"type": ["string", "null"], "pattern": "^[a-f0-9]{40}([a-f0-9]{24})?$"},
+    "brief": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "version", "hash"],
+      "properties": {
+        "status": {"enum": ["EMPTY", "DRAFT", "READY", "CONFIRMED"]},
+        "version": {"type": "integer", "minimum": 0},
+        "hash": {"$ref": "#/$defs/nullableHash"}
+      }
+    },
+    "artifact_manifest_hash": {"$ref": "#/$defs/nullableHash"},
+    "review": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["request_id", "gate", "artifact_hash", "opened_at", "deadline_at", "policy_version"],
+          "properties": {
+            "request_id": {"type": "string", "minLength": 1},
+            "gate": {"$ref": "#/$defs/gate"},
+            "artifact_hash": {"$ref": "#/$defs/hash"},
+            "opened_at": {"$ref": "#/$defs/requiredTime"},
+            "deadline_at": {"$ref": "#/$defs/requiredTime"},
+            "policy_version": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "last_decision": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["event_id", "request_id", "gate", "artifact_hash", "decision", "decided_at", "actor"],
+          "properties": {
+            "event_id": {"type": "string", "minLength": 1},
+            "request_id": {"type": "string", "minLength": 1},
+            "gate": {"$ref": "#/$defs/gate"},
+            "artifact_hash": {"$ref": "#/$defs/hash"},
+            "decision": {"enum": ["APPROVED", "AUTO_ADVANCED", "REVISION_REQUESTED", "REJECTED"]},
+            "decided_at": {"$ref": "#/$defs/requiredTime"},
+            "actor": {"enum": ["USER", "SYSTEM"]}
+          }
+        }
+      ]
+    },
+    "quality": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["artifact_hash", "rubric_version", "technical_pass", "critical_findings", "scores", "repair_attempts"],
+          "properties": {
+            "artifact_hash": {"$ref": "#/$defs/hash"},
+            "rubric_version": {"type": "string", "minLength": 1},
+            "technical_pass": {"type": "boolean"},
+            "critical_findings": {"type": "integer", "minimum": 0},
+            "scores": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number", "minimum": 0, "maximum": 10}},
+            "repair_attempts": {"type": "integer", "minimum": 0}
+          }
+        }
+      ]
+    },
+    "render_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["seed", "fps", "total_frames", "width", "height", "renderer", "renderer_version", "browser_version", "node_version", "ffmpeg_version", "environment_verified"],
+      "properties": {
+        "seed": {"type": "integer"},
+        "fps": {"oneOf": [{"type": "null"}, {"type": "object", "additionalProperties": false, "required": ["numerator", "denominator"], "properties": {"numerator": {"$ref": "#/$defs/positiveInteger"}, "denominator": {"$ref": "#/$defs/positiveInteger"}}}]},
+        "total_frames": {"type": ["integer", "null"], "minimum": 1},
+        "width": {"type": ["integer", "null"], "minimum": 1},
+        "height": {"type": ["integer", "null"], "minimum": 1},
+        "renderer": {"enum": ["remotion", "canvas", "svg"]},
+        "renderer_version": {"$ref": "#/$defs/nullableId"},
+        "browser_version": {"$ref": "#/$defs/nullableId"},
+        "node_version": {"$ref": "#/$defs/nullableId"},
+        "ffmpeg_version": {"$ref": "#/$defs/nullableId"},
+        "environment_verified": {"type": "boolean"}
+      }
+    },
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "review_timeout_seconds", "minimum_score", "max_repair_attempts", "auto_advance_gates", "publication_enabled"],
+      "properties": {
+        "version": {"type": "string", "minLength": 1},
+        "review_timeout_seconds": {"const": 600},
+        "minimum_score": {"type": "number", "minimum": 0, "maximum": 10},
+        "max_repair_attempts": {"type": "integer", "minimum": 1},
+        "auto_advance_gates": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/gate"}},
+        "publication_enabled": {"const": false}
+      }
+    },
+    "handoff": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "checkpoint_id", "source_machine_id", "target_machine_id", "created_at", "resume_phase"],
+      "properties": {
+        "status": {"enum": ["LOCAL_ONLY", "PREPARED", "CLAIMED"]},
+        "checkpoint_id": {"$ref": "#/$defs/nullableId"},
+        "source_machine_id": {"$ref": "#/$defs/nullableId"},
+        "target_machine_id": {"$ref": "#/$defs/nullableId"},
+        "created_at": {"$ref": "#/$defs/time"},
+        "resume_phase": {"anyOf": [{"$ref": "#/$defs/phase"}, {"type": "null"}]}
+      }
+    },
+    "failure": {
+      "oneOf": [{"type": "null"}, {"type": "object", "additionalProperties": false, "required": ["code", "message", "retryable", "occurred_at"], "properties": {"code": {"type": "string", "minLength": 1}, "message": {"type": "string", "minLength": 1}, "retryable": {"type": "boolean"}, "occurred_at": {"$ref": "#/$defs/requiredTime"}}}]
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"phase": {"const": "WAITING_USER"}}, "required": ["phase"]},
+      "then": {"properties": {"run_id": {"type": "string", "minLength": 1}, "review": {"type": "object"}, "artifact_manifest_hash": {"$ref": "#/$defs/hash"}, "quality": {"type": "object", "properties": {"technical_pass": {"const": true}, "critical_findings": {"const": 0}}}}}
+    },
+    {
+      "if": {"properties": {"handoff": {"properties": {"status": {"const": "PREPARED"}}, "required": ["status"]}}, "required": ["handoff"]},
+      "then": {"properties": {"phase": {"const": "PAUSED"}, "handoff": {"properties": {"checkpoint_id": {"type": "string", "minLength": 1}, "source_machine_id": {"type": "string", "minLength": 1}, "created_at": {"$ref": "#/$defs/requiredTime"}, "resume_phase": {"$ref": "#/$defs/phase"}}}}}
+    }
+  ]
+}
